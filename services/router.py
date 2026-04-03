@@ -8,11 +8,7 @@ from services.stream_service import stream_ai_response
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
 
-# =============================
-# 🔹 FAST KEYWORD PRE-CHECK
-# =============================
 def quick_intent_check(message: str):
-
     msg = message.lower()
 
     if any(word in msg for word in ["risen", "rsn", "tokenomics", "roadmap"]):
@@ -33,11 +29,7 @@ def quick_intent_check(message: str):
     return None
 
 
-# =============================
-# 🔹 AI CLASSIFIER (FALLBACK)
-# =============================
 def classify_intent(message: str) -> str:
-
     prompt = f"""
     Classify the user request into one of these categories:
 
@@ -62,9 +54,6 @@ def classify_intent(message: str) -> str:
     return response.choices[0].message.content.strip()
 
 
-# =============================
-# 🔹 MODE MAPPER (NEW SAFE ADD)
-# =============================
 def map_intent_to_mode(intent: str) -> str:
     return {
         "RISEN_KNOWLEDGE": "risen",
@@ -76,10 +65,8 @@ def map_intent_to_mode(intent: str) -> str:
     }.get(intent, "default")
 
 
-# =============================
-# 🔹 MAIN ROUTER
-# =============================
-def route_request(message: str, session_id: str = "default"):
+# 🔥 UPDATED
+def route_request(message: str, session_id: str = "default", context: dict = {}):
 
     intent = quick_intent_check(message)
 
@@ -99,47 +86,9 @@ def route_request(message: str, session_id: str = "default"):
             }
         }
 
-    # ✅ unified response (no breaking)
     return get_ai_response(
         message,
         mode=mode,
-        session_id=session_id
-    )
-
-
-# =============================
-# 🔹 STREAM ROUTER
-# =============================
-def route_stream_request(message: str, session_id: str = "default"):
-
-    intent = quick_intent_check(message)
-
-    if not intent:
-        intent = classify_intent(message)
-
-    mode = map_intent_to_mode(intent)
-
-    print(f"🧠 [STREAM] Intent: {intent} | Mode: {mode}")
-
-    if intent == "MEDIA":
-
-        image_path = generate_avatar_from_text(message)
-
-        filename = image_path.split("\\")[-1]
-        BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
-        image_url = f"{BASE_URL}/images/{filename}"
-
-        return {
-            "status": "success",
-            "type": "image",
-            "mode": "content",
-            "data": {
-                "image_url": image_url
-            }
-        }
-
-    return stream_ai_response(
-        user_message=message,
-        mode=mode,
-        session_id=session_id
+        session_id=session_id,
+        context=context  # 🔥 NEW
     )

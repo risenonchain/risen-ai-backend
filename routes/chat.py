@@ -1,16 +1,18 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from services.router import route_request
 from fastapi.responses import StreamingResponse
 from services.stream_service import stream_ai_response
 from utils.deps import get_current_ai_user
+from services.rate_limit import rate_limit_check  # 🔥 NEW
 
 router = APIRouter()
 
 
 class ChatRequest(BaseModel):
     message: str
-    session_id: str = "default"  # ✅ KEEP THIS (for safety)
+    session_id: str = "default"
+    context: dict = {}  # 🔥 NEW
 
 
 @router.post("/chat")
@@ -18,10 +20,17 @@ def chat(
     req: ChatRequest,
     user=Depends(get_current_ai_user),
 ):
-    # ✅ override session_id safely
     session_id = str(user["id"]) if user else req.session_id
 
-    return route_request(req.message, session_id=session_id)
+    # 🔥 RATE LIMIT
+    if user and not rate_limit_check(str(user["id"])):
+        raise HTTPException(status_code=429, detail="Too many requests")
+
+    return route_request(
+        req.message,
+        session_id=session_id,
+        context=req.context  # 🔥 NEW
+    )
 
 
 @router.post("/chat/stream")
@@ -30,6 +39,10 @@ def chat_stream(
     user=Depends(get_current_ai_user),
 ):
     session_id = str(user["id"]) if user else req.session_id
+
+    # 🔥 RATE LIMIT
+    if user and not rate_limit_check(str(user["id"])):
+        raise HTTPException(status_code=429, detail="Too many requests")
 
     def generator():
         for chunk in stream_ai_response(

@@ -7,10 +7,14 @@ from services.memory_service import get_history, add_message
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
 
-def get_ai_response(user_message: str, mode: str = "default", session_id: str = "default"):
+def get_ai_response(
+    user_message: str,
+    mode: str = "default",
+    session_id: str = "default",
+    context: dict = {}  # 🔥 NEW
+):
 
-    context = retrieve_context(user_message)
-
+    context_data = retrieve_context(user_message)
     history = get_history(session_id)
 
     mode_instruction = {
@@ -21,16 +25,19 @@ def get_ai_response(user_message: str, mode: str = "default", session_id: str = 
         "default": "Respond clearly using headings and bullet points."
     }
 
+    # 🔥 USER CONTEXT STRING
+    user_context = ""
+    if context:
+        user_context = f"User Context:\n{context}"
+
     messages = [
         {"role": "system", "content": RISEN_SYSTEM_PROMPT},
         {"role": "system", "content": f"Mode: {mode}. {mode_instruction.get(mode)}"},
-        {"role": "system", "content": f"Context:\n{context}"}
+        {"role": "system", "content": f"Knowledge Context:\n{context_data}"},
+        {"role": "system", "content": user_context}  # 🔥 NEW
     ]
 
-    # 🔥 ADD MEMORY
     messages.extend(history)
-
-    # Add current user message
     messages.append({"role": "user", "content": user_message})
 
     response = client.chat.completions.create(
@@ -41,7 +48,6 @@ def get_ai_response(user_message: str, mode: str = "default", session_id: str = 
 
     reply = response.choices[0].message.content
 
-    # 🔥 SAVE MEMORY
     add_message(session_id, "user", user_message)
     add_message(session_id, "assistant", reply)
 
