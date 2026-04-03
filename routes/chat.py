@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from risen_ai.services.router import route_request
+from services.router import route_request
 from fastapi.responses import StreamingResponse
 from services.stream_service import stream_ai_response
 from utils.deps import get_current_ai_user
