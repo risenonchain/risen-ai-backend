@@ -1,3 +1,4 @@
+import os
 from openai import OpenAI
 from core.config import settings
 from services.chat_service import get_ai_response
@@ -125,7 +126,8 @@ def route_stream_request(message: str, session_id: str = "default"):
         image_path = generate_avatar_from_text(message)
 
         filename = image_path.split("\\")[-1]
-        image_url = f"http://127.0.0.1:8000/images/{filename}"
+        BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
+        image_url = f"{BASE_URL}/images/{filename}"
 
         return {
             "status": "success",
