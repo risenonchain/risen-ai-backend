@@ -13,3 +13,4 @@ python-dotenv
 tiktoken
 
 Pillow
+python-jose[cryptography]
