@@ -1,5 +1,5 @@
 from openai import OpenAI
-from risen_ai.core.config import settings
+from core.config import settings
 
 import base64
 import os

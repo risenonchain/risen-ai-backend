@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from risen_ai.services.media_service import generate_avatar_from_text
+from services.media_service import generate_avatar_from_text
 
 router = APIRouter()
 

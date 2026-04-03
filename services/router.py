@@ -1,8 +1,8 @@
 from openai import OpenAI
-from risen_ai.core.config import settings
-from risen_ai.services.chat_service import get_ai_response
-from risen_ai.services.media_service import generate_avatar_from_text
-from risen_ai.services.stream_service import stream_ai_response
+from core.config import settings
+from services.chat_service import get_ai_response
+from services.media_service import generate_avatar_from_text
+from services.stream_service import stream_ai_response
 
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 

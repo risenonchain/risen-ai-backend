@@ -3,7 +3,7 @@ import os
 from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from risen_ai.knowledge_base.vector_store import get_vector_store
+from knowledge_base.vector_store import get_vector_store
 
 DATA_PATH = "risen_ai/knowledge_base/data"
 

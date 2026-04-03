@@ -1,8 +1,8 @@
 from openai import OpenAI
-from risen_ai.core.config import settings
-from risen_ai.core.prompts import RISEN_SYSTEM_PROMPT
-from risen_ai.knowledge_base.retriever import retrieve_context
-from risen_ai.services.memory_service import get_history, add_message
+from core.config import settings
+from core.prompts import RISEN_SYSTEM_PROMPT
+from knowledge_base.retriever import retrieve_context
+from services.memory_service import get_history, add_message
 
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 

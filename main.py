@@ -1,11 +1,8 @@
 from fastapi import FastAPI
-from risen_ai.routes.chat import router as chat_router
-from risen_ai.routes.media import router as media_router
+from routes.chat import router as chat_router
+from routes.media import router as media_router
 from fastapi.staticfiles import StaticFiles
-from risen_ai.routes.session import router as session_router
-
-
-
+from routes.session import router as session_router
 
 
 app = FastAPI(
@@ -24,7 +21,3 @@ app.include_router(session_router, prefix="/ai")
 @app.get("/")
 def root():
     return {"message": "RISEN AI is running"}
-
-
-
-

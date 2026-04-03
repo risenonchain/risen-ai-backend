@@ -1,6 +1,6 @@
 from langchain_chroma import Chroma
-from risen_ai.knowledge_base.embeddings import get_embeddings
-from risen_ai.core.config import settings
+from knowledge_base.embeddings import get_embeddings
+from core.config import settings
 
 def get_vector_store():
     return Chroma(

@@ -1,4 +1,4 @@
-from risen_ai.knowledge_base.vector_store import get_vector_store
+from knowledge_base.vector_store import get_vector_store
 
 def retrieve_context(query: str):
 

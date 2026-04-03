@@ -1,5 +1,5 @@
 from langchain_openai import OpenAIEmbeddings
-from risen_ai.core.config import settings
+from core.config import settings
 
 def get_embeddings():
     return OpenAIEmbeddings(

@@ -1,6 +1,6 @@
 import requests
 import json
-from risen_ai.core.config import settings
+from core.config import settings
 
 BASE_URL = settings.REDIS_URL
 HEADERS = {
