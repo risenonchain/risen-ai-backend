@@ -11,3 +11,5 @@ langchain_chroma
 chromadb
 python-dotenv
 tiktoken
+
+PIL
