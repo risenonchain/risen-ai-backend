@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from routes.chat import router as chat_router
 from routes.media import router as media_router
@@ -10,6 +11,8 @@ app = FastAPI(
     description="RISEN AI Intelligence Layer",
     version="1.0.0"
 )
+
+os.makedirs("generated_images", exist_ok=True)
 
 # Include routes
 app.include_router(chat_router, prefix="/ai")
