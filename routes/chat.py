@@ -23,8 +23,8 @@ def chat(req: ChatRequest):
         session_id = req.session_id or "fallback"
 
         # 🔥 Rate limit (safe)
-        if not rate_limit_check(session_id):
-            raise HTTPException(status_code=429, detail="Too many requests")
+        #if not rate_limit_check(session_id):
+          #  raise HTTPException(status_code=429, detail="Too many requests")
 
         response = route_request(
             req.message,
@@ -48,8 +48,8 @@ def chat_stream(req: ChatRequest):
     session_id = req.session_id or "fallback"
 
     # 🔥 Rate limit (safe)
-    if not rate_limit_check(session_id):
-        raise HTTPException(status_code=429, detail="Too many requests")
+    #if not rate_limit_check(session_id):
+    #    raise HTTPException(status_code=429, detail="Too many requests")
 
     def generator():
         try:
