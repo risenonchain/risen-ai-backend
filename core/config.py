@@ -9,6 +9,7 @@ class Settings:
     # 🔐 CORE
     # =========================
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    VECTOR_DB_PATH: str = "knowledge_base/db" 
 
     MODEL = os.getenv("MODEL", "gpt-4o-mini")
     TEMPERATURE = float(os.getenv("TEMPERATURE", 0.7))
