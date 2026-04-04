@@ -45,13 +45,18 @@ def classify_intent(message: str) -> str:
     Only return the category name.
     """
 
-    response = client.chat.completions.create(
-        model=settings.MODEL,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0
-    )
+    try:
+        response = client.chat.completions.create(
+            model=settings.MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0
+        )
 
-    return response.choices[0].message.content.strip()
+        return response.choices[0].message.content.strip()
+
+    except Exception as e:
+        print("🔥 INTENT CLASSIFICATION ERROR:", str(e))
+        return "GENERAL"
 
 
 def map_intent_to_mode(intent: str) -> str:
@@ -65,30 +70,49 @@ def map_intent_to_mode(intent: str) -> str:
     }.get(intent, "default")
 
 
-# 🔥 UPDATED
-def route_request(message: str, session_id: str = "default", context: dict = {}):
+# 🔥 UPDATED (SAFE VERSION)
+def route_request(message: str, session_id: str = "default", context: dict = None):
 
-    intent = quick_intent_check(message)
+    # ✅ FIX: avoid shared mutable default
+    if context is None:
+        context = {}
 
-    if not intent:
-        intent = classify_intent(message)
+    # 🔥 Ensure context is dict
+    if not isinstance(context, dict):
+        print("⚠️ Invalid context type, resetting...")
+        context = {}
 
-    mode = map_intent_to_mode(intent)
+    try:
+        intent = quick_intent_check(message)
 
-    print(f"🧠 Detected intent: {intent} | Mode: {mode}")
+        if not intent:
+            intent = classify_intent(message)
 
-    if intent == "MEDIA":
-        image_url = generate_avatar_from_text(message)
+        mode = map_intent_to_mode(intent)
+
+        print(f"🧠 Detected intent: {intent} | Mode: {mode}")
+
+        if intent == "MEDIA":
+            image_url = generate_avatar_from_text(message)
+            return {
+                "type": "image",
+                "data": {
+                    "image_url": image_url
+                }
+            }
+
+        return get_ai_response(
+            message,
+            mode=mode,
+            session_id=session_id,
+            context=context
+        )
+
+    except Exception as e:
+        print("🔥 ROUTE REQUEST ERROR:", str(e))
         return {
-            "type": "image",
+            "type": "text",
             "data": {
-                "image_url": image_url
+                "content": "⚠️ Something went wrong processing your request."
             }
         }
-
-    return get_ai_response(
-        message,
-        mode=mode,
-        session_id=session_id,
-        context=context  # 🔥 NEW
-    )
