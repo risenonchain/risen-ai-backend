@@ -31,13 +31,15 @@ def save_base64_image(image_base64, prefix="img"):
 def add_logo_overlay(image_path):
     base = Image.open(image_path).convert("RGBA")
 
-    if os.path.exists(LOGO_PATH):
-        logo = Image.open(LOGO_PATH).convert("RGBA")
-        size = int(base.width * 0.2)
-        logo = logo.resize((size, size))
-
-        pos = (base.width - size - 20, base.height - size - 20)
-        base.paste(logo, pos, logo)
+    try:
+        if os.path.exists(LOGO_PATH):
+            logo = Image.open(LOGO_PATH).convert("RGBA")
+            size = int(base.width * 0.2)
+            logo = logo.resize((size, size))
+            pos = (base.width - size - 20, base.height - size - 20)
+            base.paste(logo, pos, logo)
+    except Exception as e:
+        print(f"[WARN] Logo overlay skipped: {e}")
 
     base.save(image_path)
     return image_path
@@ -129,7 +131,8 @@ def generate_scorecard(avatar_path, score, rank, username):
     try:
         title_font = ImageFont.truetype(FONT_PATH, 70)
         text_font = ImageFont.truetype(FONT_PATH, 40)
-    except:
+    except Exception as e:
+        print(f"[WARN] Custom font missing, using default: {e}")
         title_font = None
         text_font = None
 
