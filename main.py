@@ -7,6 +7,7 @@ from knowledge_base.retriever import reload_vector_store
 from routes.chat import router as chat_router
 from routes.media import router as media_router
 from routes.session import router as session_router
+from routes.stats import router as stats_router
 from fastapi.staticfiles import StaticFiles
 
 app = FastAPI(
@@ -35,6 +36,7 @@ app.add_middleware(
 app.include_router(chat_router, prefix="/ai")
 app.include_router(media_router, prefix="/ai")
 app.include_router(session_router, prefix="/ai")
+app.include_router(stats_router, prefix="")
 
 # Admin endpoint to reload RISEN knowledge base (POST /reload-kb)
 @app.post("/reload-kb")
