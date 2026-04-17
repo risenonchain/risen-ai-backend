@@ -119,9 +119,23 @@ def generate_avatar_from_text(user_input: str):
 # ==============================
 # 🔹 SCORECARD
 # ==============================
-def generate_scorecard(avatar_path, score, rank, username):
+import requests
+from io import BytesIO
 
-    base = Image.open(avatar_path).convert("RGBA").resize((1024, 1024))
+def generate_scorecard(avatar_path, score, rank, username):
+    # Support avatar_path as URL or local path
+    try:
+        if avatar_path.startswith("http://") or avatar_path.startswith("https://"):
+            response = requests.get(avatar_path, timeout=10)
+            response.raise_for_status()
+            avatar_img = Image.open(BytesIO(response.content)).convert("RGBA")
+        else:
+            avatar_img = Image.open(avatar_path).convert("RGBA")
+    except Exception as e:
+        print(f"[WARN] Avatar load failed ({avatar_path}): {e}, using default avatar.")
+        avatar_img = Image.new("RGBA", (1024, 1024), (30, 30, 40, 255))
+
+    base = avatar_img.resize((1024, 1024))
     draw = ImageDraw.Draw(base)
 
     title = get_title(score)

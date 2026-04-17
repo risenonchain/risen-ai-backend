@@ -1,6 +1,8 @@
 
+
 from pathlib import Path
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from services.media_service import generate_avatar_from_text, generate_scorecard
 
@@ -20,10 +22,18 @@ def generate_scorecard_api(req: ScorecardRequest, request: Request):
             avatar_path = "/images/default-avatar.png"
         path = generate_scorecard(avatar_path, req.score, req.rank, req.username)
         filename = Path(path).name
-        image_url = str(request.base_url).rstrip("/") + f"/images/{filename}"
+        image_url = str(request.base_url).rstrip("/") + f"/download/scorecard/{filename}"
         return {"status": "success", "image_url": image_url}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Scorecard generation failed: {str(e)}")
+
+# Download endpoint for scorecard images
+@router.get("/download/scorecard/{filename}")
+def download_scorecard(filename: str):
+    file_path = Path("generated_images") / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Scorecard not found")
+    return FileResponse(str(file_path), media_type="image/png", filename=filename)
 
 class MediaRequest(BaseModel):
     prompt: str
