@@ -28,11 +28,30 @@ def generate_scorecard_api(req: ScorecardRequest, request: Request):
         raise HTTPException(status_code=500, detail=f"Scorecard generation failed: {str(e)}")
 
 # Download endpoint for scorecard images
+
+# On-demand scorecard generation and download
 @router.get("/download/scorecard/{filename}")
-def download_scorecard(filename: str):
+def download_scorecard(
+    filename: str,
+    avatar_path: str = None,
+    score: int = None,
+    rank: int = None,
+    username: str = None
+):
     file_path = Path("generated_images") / filename
     if not file_path.exists():
-        raise HTTPException(status_code=404, detail="Scorecard not found")
+        # Try to regenerate if all params are provided
+        if avatar_path and score is not None and rank is not None and username:
+            from services.media_service import generate_scorecard
+            try:
+                path = generate_scorecard(avatar_path, int(score), int(rank), username)
+                if Path(path).name != filename:
+                    # Rename to match requested filename
+                    Path(path).rename(file_path)
+                return FileResponse(str(file_path), media_type="image/png", filename=filename)
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Scorecard regeneration failed: {e}")
+        raise HTTPException(status_code=404, detail="Scorecard not found and cannot be regenerated (missing params)")
     return FileResponse(str(file_path), media_type="image/png", filename=filename)
 
 class MediaRequest(BaseModel):
