@@ -2,11 +2,11 @@ fastapi
 uvicorn
 openai
 
-langchain
+langchain-core
 langchain-community
 langchain-openai
 langchain-text-splitters
-langchain_chroma
+langchain-chroma
 
 chromadb
 python-dotenv
