@@ -9,31 +9,36 @@ from PIL import Image, ImageDraw, ImageFont
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
 GENERATED_DIR = "generated_images"
-LOGO_PATH = "assets/risen_logo.png"
-FONT_PATH = "assets/fonts/orbitron.ttf"
+# Try multiple possible logo locations
+LOGO_PATHS = [
+    "assets/risen_logo.png",
+    "../risen-website/public/logo.png",
+    "public/logo.png"
+]
+# Try multiple font locations
+FONT_PATHS = [
+    "assets/fonts/orbitron.ttf",
+    "../risen-website/public/fonts/orbitron.ttf",
+    "C:/Windows/Fonts/arial.ttf" # Fallback for local windows dev
+]
 
+def get_logo_path():
+    for p in LOGO_PATHS:
+        if os.path.exists(p): return p
+    return None
 
-# ==============================
-# 🔹 UTILS
-# ==============================
-def save_base64_image(image_base64, prefix="img"):
-    os.makedirs(GENERATED_DIR, exist_ok=True)
-
-    filename = f"{prefix}_{datetime.now().timestamp()}.png"
-    path = os.path.join(GENERATED_DIR, filename)
-
-    with open(path, "wb") as f:
-        f.write(base64.b64decode(image_base64))
-
-    return path
-
+def get_font_path():
+    for p in FONT_PATHS:
+        if os.path.exists(p): return p
+    return None
 
 def add_logo_overlay(image_path):
     base = Image.open(image_path).convert("RGBA")
 
     try:
-        if os.path.exists(LOGO_PATH):
-            logo = Image.open(LOGO_PATH).convert("RGBA")
+        logo_path = get_logo_path()
+        if logo_path:
+            logo = Image.open(logo_path).convert("RGBA")
             size = int(base.width * 0.2)
             logo = logo.resize((size, size))
             pos = (base.width - size - 20, base.height - size - 20)
@@ -75,15 +80,6 @@ def get_colors(tier):
 
 
 def generate_avatar_from_text(user_input: str):
-
-    from openai import OpenAI
-    from risen_ai.core.config import settings
-    import base64
-    import os
-    from datetime import datetime
-
-    client = OpenAI(api_key=settings.OPENAI_API_KEY)
-
     prompt = f"""
     Create a futuristic crypto avatar.
 
@@ -97,23 +93,28 @@ def generate_avatar_from_text(user_input: str):
     {user_input}
     """
 
-    result = client.images.generate(
-        model="gpt-image-1",
-        prompt=prompt,
-        size="1024x1024"
-    )
+    try:
+        result = client.images.generate(
+            model="dall-e-3",
+            prompt=prompt,
+            size="1024x1024",
+            response_format="b64_json"
+        )
 
-    image_base64 = result.data[0].b64_json
+        image_base64 = result.data[0].b64_json
 
-    os.makedirs("generated_images", exist_ok=True)
+        os.makedirs(GENERATED_DIR, exist_ok=True)
 
-    filename = f"avatar_{datetime.now().timestamp()}.png"
-    path = os.path.join("generated_images", filename)
+        filename = f"avatar_{datetime.now().timestamp()}.png"
+        path = os.path.join(GENERATED_DIR, filename)
 
-    with open(path, "wb") as f:
-        f.write(base64.b64decode(image_base64))
+        with open(path, "wb") as f:
+            f.write(base64.b64decode(image_base64))
 
-    return path
+        return f"/images/{filename}"
+    except Exception as e:
+        print(f"🔥 AVATAR GENERATION ERROR: {e}")
+        return "/images/default-avatar.png"
 
 
 # ==============================
@@ -130,10 +131,25 @@ def generate_scorecard(avatar_path, score, rank, username):
             response.raise_for_status()
             avatar_img = Image.open(BytesIO(response.content)).convert("RGBA")
         else:
-            avatar_img = Image.open(avatar_path).convert("RGBA")
+            # Handle local paths or paths from static mount
+            local_path = avatar_path
+            if avatar_path.startswith("/images/"):
+                local_path = os.path.join(GENERATED_DIR, avatar_path.replace("/images/", ""))
+            elif avatar_path.startswith("images/"):
+                 local_path = os.path.join(GENERATED_DIR, avatar_path.replace("images/", ""))
+
+            if not os.path.exists(local_path):
+                # Fallback to default in generated_images
+                local_path = os.path.join(GENERATED_DIR, "default-avatar.png")
+
+            if not os.path.exists(local_path):
+                 # Create a simple colored background if even default is missing
+                 avatar_img = Image.new("RGBA", (1024, 1024), (10, 20, 30, 255))
+            else:
+                 avatar_img = Image.open(local_path).convert("RGBA")
     except Exception as e:
-        print(f"[WARN] Avatar load failed ({avatar_path}): {e}, using default avatar.")
-        avatar_img = Image.new("RGBA", (1024, 1024), (30, 30, 40, 255))
+        print(f"[WARN] Avatar load failed ({avatar_path}): {e}, using fallback.")
+        avatar_img = Image.new("RGBA", (1024, 1024), (10, 20, 30, 255))
 
     base = avatar_img.resize((1024, 1024))
     draw = ImageDraw.Draw(base)
@@ -143,8 +159,9 @@ def generate_scorecard(avatar_path, score, rank, username):
     color = get_colors(tier)
 
     try:
-        title_font = ImageFont.truetype(FONT_PATH, 70)
-        text_font = ImageFont.truetype(FONT_PATH, 40)
+        f_path = get_font_path()
+        title_font = ImageFont.truetype(f_path, 70) if f_path else None
+        text_font = ImageFont.truetype(f_path, 40) if f_path else None
     except Exception as e:
         print(f"[WARN] Custom font missing, using default: {e}")
         title_font = None

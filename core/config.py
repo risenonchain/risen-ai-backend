@@ -15,6 +15,9 @@ class Settings:
     TEMPERATURE = float(os.getenv("TEMPERATURE", 0.7))
     MAX_TOKENS = int(os.getenv("MAX_TOKENS", 500))
 
+    # Verification
+    RUSH_API_URL = os.getenv("NEXT_PUBLIC_RUSH_API_URL", "https://risen-rush-backend.onrender.com")
+
     # =========================
     # 🔴 REDIS (UPSTASH)
     # =========================

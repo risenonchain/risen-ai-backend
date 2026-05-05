@@ -6,75 +6,73 @@ from services.memory_service import get_history, add_message
 
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
-
 def get_ai_response(
     user_message: str,
     mode: str = "default",
     session_id: str = "default",
-    context: dict = None  # 🔥 FIXED
+    context: dict = None
 ):
-
-    # ✅ FIX: avoid shared mutable default
     if context is None:
         context = {}
 
-    # 🔥 Retrieve context
-    context_data = retrieve_context(user_message)
+    # 🔥 Intelligent Context Retrieval
+    try:
+        context_data = retrieve_context(user_message)
+    except:
+        context_data = ""
 
-    # 🔥 Get history safely
     history = get_history(session_id)
-
-    # ✅ FIX: ensure history is a list
     if not isinstance(history, list):
-        print("⚠️ History is not a list, resetting...")
         history = []
 
     mode_instruction = {
-        "education": "Explain clearly using structured steps and simple breakdowns.",
-        "market": "Provide structured analysis with bullet points and key insights.",
-        "risen": "Explain RISEN clearly with sections and concise structure.",
-        "content": "Write concise, punchy, shareable content.",
-        "default": "Respond clearly using headings and bullet points."
+        "education": "System Protocol: Deep educational breakdown. Use step-by-step logic, bold terminology, and summary conclusions.",
+        "market": "System Protocol: Quantitative market analysis. Prioritize risk assessment, trend indicators, and structural insights.",
+        "risen": "System Protocol: Ecosystem architectural expert. Provide high-fidelity technical data regarding RISEN protocols and roadmap.",
+        "content": "System Protocol: High-impact content creation. Minimalist, punchy, and strategically engineered for viral reach.",
+        "default": "System Protocol: General cognitive mode. Respond with clarity, precision, and architectural authority."
     }
-
-    # 🔥 USER CONTEXT STRING
-    user_context = ""
-    if context:
-        user_context = f"User Context:\n{context}"
 
     messages = [
         {"role": "system", "content": RISEN_SYSTEM_PROMPT},
-        {"role": "system", "content": f"Mode: {mode}. {mode_instruction.get(mode)}"},
-        {"role": "system", "content": f"Knowledge Context:\n{context_data}"},
-        {"role": "system", "content": user_context}
+        {"role": "system", "content": mode_instruction.get(mode, mode_instruction["default"])},
+        {"role": "system", "content": f"Knowledge_Node_Context:\n{context_data}"}
     ]
 
-    # ✅ SAFE EXTEND
+    if context:
+        messages.append({"role": "system", "content": f"Active_User_Context: {context}"})
+
     try:
         messages.extend(history)
-    except Exception as e:
-        print("🔥 HISTORY EXTEND ERROR:", str(e))
+    except:
+        pass
 
     messages.append({"role": "user", "content": user_message})
 
     try:
+        # Using more tokens for "Gemini" standard complexity
         response = client.chat.completions.create(
             model=settings.MODEL,
             messages=messages,
-            temperature=settings.TEMPERATURE
+            temperature=settings.TEMPERATURE,
+            max_tokens=800
         )
 
         reply = response.choices[0].message.content
 
     except Exception as e:
-        print("🔥 OPENAI ERROR:", str(e))
-        return "⚠️ AI failed to generate response."
+        print(f"🔥 OPENAI_ENGINE_ERROR: {e}")
+        return "⚠️ Neural core communication failure. Protocol interrupted."
 
-    # 🔥 Save memory safely
     try:
         add_message(session_id, "user", user_message)
         add_message(session_id, "assistant", reply)
-    except Exception as e:
-        print("🔥 MEMORY SAVE ERROR:", str(e))
+    except:
+        pass
 
-    return reply
+    return {
+        "type": "text",
+        "data": {
+            "content": reply
+        }
+    }
