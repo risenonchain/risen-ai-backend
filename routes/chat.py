@@ -6,10 +6,9 @@ from services.stream_service import stream_ai_response
 from services.rate_limit import rate_limit_check
 from utils.auth import get_user_status
 from services.usage_service import check_usage
+from schemas.chat import ChatRequest
 
 router = APIRouter()
-
-# ... (ChatRequest remains same)
 
 # =========================
 # 💬 CHAT (SAFE MODE)
