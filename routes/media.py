@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 from fastapi import APIRouter, HTTPException, Request, Depends
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -11,7 +12,7 @@ router = APIRouter()
 class ScorecardRequest(BaseModel):
     avatar_path: str
     score: int
-    rank: int
+    rank: Optional[int] = 0
     username: str
 
 @router.post("/generate-scorecard")

@@ -124,26 +124,32 @@ import requests
 from io import BytesIO
 
 def generate_scorecard(avatar_path, score, rank, username):
+    print(f"🎨 Generating scorecard for {username} (Score: {score}, Rank: {rank})")
+    print(f"🖼️ Avatar path: {avatar_path}")
     # Support avatar_path as URL or local path
     try:
-        if avatar_path.startswith("http://") or avatar_path.startswith("https://"):
+        if str(avatar_path).startswith("http"):
             response = requests.get(avatar_path, timeout=10)
             response.raise_for_status()
             avatar_img = Image.open(BytesIO(response.content)).convert("RGBA")
         else:
             # Handle local paths or paths from static mount
             local_path = avatar_path
-            if avatar_path.startswith("/images/"):
+            if str(avatar_path).startswith("/images/"):
                 local_path = os.path.join(GENERATED_DIR, avatar_path.replace("/images/", ""))
-            elif avatar_path.startswith("images/"):
+            elif str(avatar_path).startswith("images/"):
                  local_path = os.path.join(GENERATED_DIR, avatar_path.replace("images/", ""))
 
             if not os.path.exists(local_path):
-                # Fallback to default in generated_images
-                local_path = os.path.join(GENERATED_DIR, "default-avatar.png")
+                # Try prepending GENERATED_DIR if it's just a filename
+                test_path = os.path.join(GENERATED_DIR, os.path.basename(avatar_path))
+                if os.path.exists(test_path):
+                    local_path = test_path
+                else:
+                    local_path = os.path.join(GENERATED_DIR, "default-avatar.png")
 
             if not os.path.exists(local_path):
-                 # Create a simple colored background if even default is missing
+                 print(f"⚠️ Local avatar not found at {local_path}, using blank background")
                  avatar_img = Image.new("RGBA", (1024, 1024), (10, 20, 30, 255))
             else:
                  avatar_img = Image.open(local_path).convert("RGBA")
