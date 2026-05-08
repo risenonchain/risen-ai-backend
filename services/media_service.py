@@ -42,10 +42,20 @@ def add_logo_overlay(image_path):
         logo_path = get_logo_path()
         if logo_path:
             logo = Image.open(logo_path).convert("RGBA")
-            size = int(base.width * 0.12)
+            size = int(base.width * 0.15)
             logo = logo.resize((size, size))
-            # Position at top right
-            pos = (base.width - size - 60, 60)
+            # Position at top right with some flare logic
+            pos = (base.width - size - 80, 80)
+
+            # Glow behind logo
+            glow_size = int(size * 1.5)
+            glow = Image.new("RGBA", (glow_size, glow_size), (0,0,0,0))
+            g_draw = ImageDraw.Draw(glow)
+            for r in range(glow_size//2, 0, -2):
+                alpha = int((1 - (r / (glow_size//2)))**2 * 100)
+                g_draw.ellipse([glow_size//2-r, glow_size//2-r, glow_size//2+r, glow_size//2+r], fill=(46, 219, 255, alpha))
+
+            base.paste(glow, (pos[0] + size//2 - glow_size//2, pos[1] + size//2 - glow_size//2), glow)
             base.paste(logo, pos, logo)
     except Exception as e:
         print(f"[WARN] Logo overlay skipped: {e}")
@@ -124,17 +134,17 @@ def generate_avatar_from_text(user_input: str):
 
 
 # ==============================
-# 🔹 SCORECARD
+# 🔹 SCORECARD (PREMIUM V2)
 # ==============================
 import requests
 from io import BytesIO
 
 def generate_scorecard(avatar_path, score, rank, username):
     username = str(username or "UNKNOWN").upper()
-    print(f"🎨 Generating standalone premium scorecard for {username} (Score: {score}, Rank: {rank})")
+    print(f"🎨 Generating ULTRA-PREMIUM scorecard for {username} (Score: {score}, Rank: {rank})")
 
-    # Create a pure aesthetic background (Deep Risen Space)
-    base = Image.new("RGBA", (1024, 1024), (2, 7, 13, 255))
+    # 1. Base Canvas - Deep Futuristic Black/Blue
+    base = Image.new("RGBA", (1024, 1024), (2, 5, 10, 255))
     overlay = Image.new("RGBA", (1024, 1024), (0, 0, 0, 0))
     draw = ImageDraw.Draw(overlay)
 
@@ -147,83 +157,115 @@ def generate_scorecard(avatar_path, score, rank, username):
     f_path = get_font_path()
     try:
         if f_path:
-            h1 = ImageFont.truetype(f_path, 100)
-            h2 = ImageFont.truetype(f_path, 55)
-            h3 = ImageFont.truetype(f_path, 32)
-            stat_label = ImageFont.truetype(f_path, 28)
-            stat_font = ImageFont.truetype(f_path, 110)
+            h1 = ImageFont.truetype(f_path, 110)
+            h2 = ImageFont.truetype(f_path, 60)
+            h3 = ImageFont.truetype(f_path, 36)
+            stat_label = ImageFont.truetype(f_path, 30)
+            stat_font = ImageFont.truetype(f_path, 130)
+            meta_font = ImageFont.truetype(f_path, 24)
         else:
-            h1 = h2 = h3 = stat_label = stat_font = ImageFont.load_default()
+            h1 = h2 = h3 = stat_label = stat_font = meta_font = ImageFont.load_default()
     except:
-        h1 = h2 = h3 = stat_label = stat_font = ImageFont.load_default()
+        h1 = h2 = h3 = stat_label = stat_font = meta_font = ImageFont.load_default()
 
-    # 1. Background Visuals (Grid & Glow)
-    # Draw subtle tech grid
-    grid_color = (*accent_color, 15)
-    for i in range(0, 1024, 64):
+    # 2. BACKGROUND HUD ELEMENTS (The "Premium" touches)
+    # A. Subtle Linear Grid
+    grid_color = (*accent_color, 20)
+    for i in range(0, 1024, 40):
         draw.line([i, 0, i, 1024], fill=grid_color, width=1)
         draw.line([0, i, 1024, i], fill=grid_color, width=1)
 
-    # Central Radial Glow
+    # B. RADAR SCANNERS (Right Side)
+    radar_center = (800, 450)
+    for r in range(50, 400, 80):
+        draw.ellipse([radar_center[0]-r, radar_center[1]-r, radar_center[0]+r, radar_center[1]+r], outline=(*accent_color, 40), width=1)
+    # Crosshairs for Radar
+    draw.line([radar_center[0]-420, radar_center[1], radar_center[0]+420, radar_center[1]], fill=(*accent_color, 25), width=1)
+    draw.line([radar_center[0], radar_center[1]-420, radar_center[0], radar_center[1]+420], fill=(*accent_color, 25), width=1)
+
+    # C. Dynamic Radial Glow (Left/Center biased)
     glow = Image.new("RGBA", (1024, 1024), (0,0,0,0))
     g_draw = ImageDraw.Draw(glow)
-    for r in range(800, 0, -10):
-        alpha = int((1 - r/800)**2 * 30)
-        g_draw.ellipse([512-r, 512-r, 512+r, 512+r], fill=(*accent_color, alpha))
+    for r in range(900, 0, -15):
+        alpha = int((1 - r/900)**3 * 50)
+        # Shift glow slightly left to balance the radar on right
+        g_draw.ellipse([200-r, 512-r, 200+r, 512+r], fill=(*accent_color, alpha))
     base = Image.alpha_composite(base, glow)
 
-    # 2. HUD Design Elements
-    # Outer Framing
-    draw.rectangle([40, 40, 984, 984], outline=(*accent_color, 60), width=2)
+    # 3. METALLIC HUD FRAME
+    padding = 30
+    # Outer double line
+    draw.rectangle([padding, padding, 1024-padding, 1024-padding], outline=(*accent_color, 120), width=3)
+    draw.rectangle([padding+10, padding+10, 1024-padding-10, 1024-padding-10], outline=(*accent_color, 40), width=1)
 
-    # Sidebar Detail (Left)
-    draw.rectangle([40, 40, 60, 984], fill=(*accent_color, 40))
+    # PREMIUM CORNER PLATES (Gold/Tier style)
+    # Top Left Plate
+    plate_size = 180
+    draw.polygon([
+        (padding, padding),
+        (padding+plate_size, padding),
+        (padding+plate_size-40, padding+40),
+        (padding+40, padding+plate_size-40),
+        (padding, padding+plate_size)
+    ], fill=(*accent_color, 180))
 
-    # Corner Geometric Accents
-    # TL
-    draw.polygon([(40, 40), (200, 40), (40, 200)], fill=(*accent_color, 100))
-    # BR
-    draw.polygon([(984, 984), (824, 984), (984, 824)], fill=(*accent_color, 100))
+    # Bottom Right Plate
+    draw.polygon([
+        (1024-padding, 1024-padding),
+        (1024-padding-plate_size, 1024-padding),
+        (1024-padding-plate_size+40, 1024-padding-40),
+        (1024-padding-40, 1024-padding-plate_size+40),
+        (1024-padding, 1024-padding-plate_size)
+    ], fill=(*accent_color, 180))
 
-    # 3. Main Text Layout (Left Aligned)
-    margin_x = 120
+    # 4. TYPOGRAPHY & LAYOUT
+    margin_left = 110
 
-    # Brand Header
-    draw.text((margin_x, 100), "RISEN RUSH", fill=(255,255,255), font=h1)
-    draw.text((margin_x, 210), f"DECRYPTION PROTOCOL: {tier}", fill=accent_color, font=h3)
+    # A. BRAND HEADER (Beveled Effect Simulation)
+    # Draw dark shadow
+    draw.text((margin_left+4, 94), "RISEN RUSH", fill=(0,0,0,150), font=h1)
+    # Main White Text
+    draw.text((margin_left, 90), "RISEN RUSH", fill=(255,255,255), font=h1)
 
-    # 4. Large Center Stats (Vertically Distributed)
-    # Rank Section
-    draw.text((margin_x, 320), "GLOBAL POSITION", fill=(255,255,255, 60), font=stat_label)
-    draw.text((margin_x, 360), f"#{rank}", fill=accent_color, font=stat_font)
+    draw.text((margin_left, 215), f"DECRYPTION PROTOCOL: {tier}", fill=accent_color, font=h3)
 
-    # Score Section
-    draw.text((margin_x, 520), "SYNCED COGNITION SCORE", fill=(255,255,255, 60), font=stat_label)
-    draw.text((margin_x, 560), f"{score:,}", fill=(255,255,255), font=stat_font)
+    # B. RANK DISPLAY
+    draw.text((margin_left, 330), "GLOBAL POSITION", fill=(255,255,255, 90), font=stat_label)
+    # Large Number with Glow-like feel (multiple offsets)
+    rank_val = f"#{rank}"
+    draw.text((margin_left+3, 373), rank_val, fill=(0,0,0,100), font=stat_font)
+    draw.text((margin_left, 370), rank_val, fill=accent_color, font=stat_font)
 
-    # Identity Section (Bottom)
-    draw.rectangle([margin_x, 740, 900, 742], fill=(*accent_color, 80))
-    draw.text((margin_x, 780), "NEURAL IDENTITY", fill=(255,255,255, 60), font=stat_label)
-    draw.text((margin_x, 820), f"@{username}", fill=(255,255,255), font=h2)
+    # C. SCORE DISPLAY
+    draw.text((margin_left, 530), "SYNCED COGNITION SCORE", fill=(255,255,255, 90), font=stat_label)
+    score_val = f"{score:,}"
+    draw.text((margin_left+3, 573), score_val, fill=(0,0,0,100), font=stat_font)
+    draw.text((margin_left, 570), score_val, fill=(255,255,255), font=stat_font)
 
-    # Cognitive Status (Floating Badge)
-    status_text = f"[{title}]"
-    s_w = draw.textlength(status_text, font=h3)
-    draw.text((margin_x, 900), status_text, fill=accent_color, font=h3)
+    # D. IDENTITY BLOCK
+    # Separator Line
+    draw.line([margin_left, 740, 900, 740], fill=(*accent_color, 150), width=2)
+    draw.text((margin_left, 775), "NEURAL IDENTITY", fill=(255,255,255, 90), font=stat_label)
+    draw.text((margin_left, 815), f"@{username}", fill=(255,255,255), font=h2)
 
-    # 5. Bottom Metadata (Technical Flair)
+    # Status Badge (Premium Gold/Tier Background)
+    status_w = draw.textlength(f" {title} ", font=h3)
+    draw.rectangle([margin_left, 900, margin_left + status_w + 10, 945], fill=(*accent_color, 40), outline=accent_color, width=1)
+    draw.text((margin_left + 5, 905), title, fill=accent_color, font=h3)
+
+    # E. BLOCK TIME (Technical Metadata)
     timestamp = datetime.now().strftime("%Y.%m.%d / %H:%M:%S")
-    draw.text((120, 950), f"BLOCK_TIME: {timestamp}", fill=(255,255,255, 40), font=h3)
+    draw.text((margin_left, 960), "BLOCK_TIME", fill=(255,255,255, 60), font=meta_font)
+    draw.text((margin_left, 985), timestamp, fill=(255,255,255, 30), font=meta_font)
 
-    # 6. Final Composite
+    # 5. FINAL COMPOSITE & SAVE
     combined = Image.alpha_composite(base, overlay)
 
-    # Save
     filename = f"scorecard_{datetime.now().timestamp()}.png"
     path = os.path.join(GENERATED_DIR, filename)
     combined.save(path)
 
-    # Add Logo (Positioned top right)
+    # 6. ADD LOGO (V2 with Glow)
     add_logo_overlay(path)
 
     return path
