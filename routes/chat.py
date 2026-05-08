@@ -16,10 +16,12 @@ router = APIRouter()
 @router.post("/chat")
 def chat(req: ChatRequest, user: dict = Depends(get_user_status)):
     try:
-        session_id = req.session_id or user["id"]
+        # session_id logic
+        user_id = user.get("id", "anonymous")
+        session_id = req.session_id or user_id
 
         # ✅ Check Usage
-        allowed, remaining = check_usage(user["id"], user["is_premium"], "prompt")
+        allowed, remaining = check_usage(user_id, user.get("is_premium", False), "prompt")
         if not allowed:
             return {
                 "type": "text",
@@ -35,9 +37,18 @@ def chat(req: ChatRequest, user: dict = Depends(get_user_status)):
             user=user
         )
 
-        # Add usage info to metadata if possible
-        if isinstance(response, dict) and "data" in response:
-            response["metadata"] = {"remaining_prompts": remaining}
+        # Ensure response is a dict and add metadata
+        if isinstance(response, str):
+            response = {
+                "type": "text",
+                "data": {"content": response}
+            }
+
+        if "metadata" not in response:
+            response["metadata"] = {}
+
+        response["metadata"]["remaining_prompts"] = remaining
+        response["metadata"]["user_id"] = user_id
 
         return response
 

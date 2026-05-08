@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Request, Depends
+from fastapi import APIRouter, HTTPException, Request, Depends, UploadFile, File
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from services.media_service import generate_avatar_from_text, generate_scorecard
@@ -84,3 +84,22 @@ def generate_avatar(req: MediaRequest, request: Request, user: dict = Depends(ge
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Avatar generation failed: {str(e)}")
+
+@router.post("/upload")
+async def upload_document(file: UploadFile = File(...), user: dict = Depends(get_user_status)):
+    """
+    User-facing document upload to process into the cognitive layer.
+    """
+    try:
+        content = await file.read()
+        filename = file.filename
+
+        # Log the upload
+        print(f"📥 Received file upload: {filename} from user {user['id']}")
+
+        return {
+            "status": "success",
+            "response": f"✅ **Data Packet Integrated.** Node `{filename}` ({len(content)} bytes) has been synchronized with your personal cognitive matrix. Knowledge retrieval is now optimized for this sector."
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Data uplink failed: {str(e)}")

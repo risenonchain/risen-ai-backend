@@ -89,10 +89,12 @@ def route_request(message: str, session_id: str = "default", context: dict = Non
         )
 
     except Exception as e:
+        import traceback
         print("🔥 ROUTE REQUEST ERROR:", str(e))
+        traceback.print_exc()
         return {
             "type": "text",
             "data": {
-                "content": "⚠️ Neural link interrupted. Cognitive synthesis failed."
+                "content": f"⚠️ Neural link interrupted. Cognitive synthesis failed. Details: {str(e)}"
             }
         }

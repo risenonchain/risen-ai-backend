@@ -25,7 +25,9 @@ app.add_middleware(
     allow_origins=[
         "https://www.risenonchain.net",
         "https://risenonchain.net",
+        "https://app.risenonchain.net",
         "http://localhost:3000",
+        "http://127.0.0.1:3000",
     ],
     allow_credentials=True,
     allow_methods=["*"],
