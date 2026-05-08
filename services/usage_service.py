@@ -1,6 +1,6 @@
 import os
 import time
-from typing import Tuple
+from typing import Tuple, Optional
 import redis
 from core.config import settings
 
@@ -16,13 +16,13 @@ def get_redis_client():
             return None
     return None
 
-def check_usage(user_id: str, is_premium: bool, action_type: str = "prompt") -> Tuple[bool, int]:
+def check_usage(user_id: str, is_premium: bool, action_type: str = "prompt") -> Tuple[bool, Optional[int]]:
     """
     Returns (allowed, remaining)
     action_type: "prompt" or "image"
     """
     if is_premium:
-        return True, 999
+        return True, None # Unlimited
 
     limit = 10 if action_type == "prompt" else 1
     key = f"usage:{user_id}:{action_type}"

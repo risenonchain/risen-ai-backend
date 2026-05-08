@@ -17,7 +17,7 @@ class ScorecardRequest(BaseModel):
 
 @router.post("/generate-scorecard")
 def generate_scorecard_api(req: ScorecardRequest, request: Request, user: dict = Depends(get_user_status)):
-    if not user["is_premium"]:
+    if not user.get("is_premium") and not user.get("is_admin"):
         raise HTTPException(status_code=403, detail="Prime Protocol required for Scorecard generation")
 
     try:

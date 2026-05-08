@@ -21,10 +21,11 @@ def get_user_status(authorization: str = Header(None)):
             user_data = res.json()
             return {
                 "id": str(user_data.get("id")),
-                "is_premium": user_data.get("is_premium", False)
+                "is_premium": user_data.get("is_premium", False),
+                "is_admin": user_data.get("is_admin", False)
             }
         else:
-            return {"id": "anonymous", "is_premium": False}
+            return {"id": "anonymous", "is_premium": False, "is_admin": False}
     except Exception as e:
         print(f"🔥 Auth verification failed: {e}")
-        return {"id": "anonymous", "is_premium": False}
+        return {"id": "anonymous", "is_premium": False, "is_admin": False}

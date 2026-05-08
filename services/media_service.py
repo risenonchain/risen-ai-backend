@@ -19,6 +19,9 @@ LOGO_PATHS = [
 FONT_PATHS = [
     "assets/fonts/orbitron.ttf",
     "../risen-website/public/fonts/orbitron.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+    "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
     "C:/Windows/Fonts/arial.ttf" # Fallback for local windows dev
 ]
 
@@ -166,12 +169,16 @@ def generate_scorecard(avatar_path, score, rank, username):
 
     try:
         f_path = get_font_path()
-        title_font = ImageFont.truetype(f_path, 70) if f_path else None
-        text_font = ImageFont.truetype(f_path, 40) if f_path else None
+        if f_path:
+            title_font = ImageFont.truetype(f_path, 70)
+            text_font = ImageFont.truetype(f_path, 40)
+        else:
+            title_font = ImageFont.load_default()
+            text_font = ImageFont.load_default()
     except Exception as e:
-        print(f"[WARN] Custom font missing, using default: {e}")
-        title_font = None
-        text_font = None
+        print(f"[WARN] Font load error, using default: {e}")
+        title_font = ImageFont.load_default()
+        text_font = ImageFont.load_default()
 
     # Header
     draw.text((50, 30), "RISEN RUSH ⚡", fill=color, font=title_font)
