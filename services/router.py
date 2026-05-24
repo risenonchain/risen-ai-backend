@@ -73,6 +73,12 @@ def route_request(message: str, session_id: str = "default", context: dict = Non
                 }
 
             image_url = generate_avatar_from_text(message)
+
+            # Ensure the frontend gets an absolute URL if needed
+            if image_url.startswith("/"):
+                api_base = os.getenv("NEXT_PUBLIC_AI_API_URL") or "https://risen-ai-backend.onrender.com"
+                image_url = f"{api_base}{image_url}"
+
             return {
                 "type": "image",
                 "data": {
